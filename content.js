@@ -1,142 +1,165 @@
-// Get the URL of the icon image file
-const iconUrl = chrome.runtime.getURL("icons/icon48.png");
+// Main Initialization Function
+function init() {
+  const iconUrl = chrome.runtime.getURL("icons/icon48.png");
+  injectHTML(iconUrl);
+  addEventListeners();
+}
 
 // Inject the icon and chat window HTML into the page
-const chatIconHTML = `
-<div id="chat-icon" class="chat-icon" style="background-image: url('${iconUrl}')"></div>
-<div id="chat-window" class="chat-window">
-  <div id="chat-header" class="chat-header">
-    <span>Conversational Search</span>
-    <button id="clear-chat" class="clear-chat">Clear</button>
-  </div>
-  <div id="chat-messages" class="chat-messages"></div>
-  <input type="text" id="chat-input" class="chat-input" placeholder="Type your query...">
-</div>
-`;
+function injectHTML(iconUrl) {
+  const chatIconHTML = `
+    <div id="chat-icon" class="chat-icon" style="background-image: url('${iconUrl}')"></div>
+    <div id="chat-window" class="chat-window">
+      <div id="chat-header" class="chat-header">
+        <span>Conversational Search</span>
+        <button id="clear-chat" class="clear-chat">Clear</button>
+      </div>
+      <div id="chat-messages" class="chat-messages"></div>
+      <input type="text" id="chat-input" class="chat-input" placeholder="Type your query...">
+    </div>
+  `;
+  document.body.insertAdjacentHTML("beforeend", chatIconHTML);
+}
 
-document.body.insertAdjacentHTML("beforeend", chatIconHTML);
+// Add all event listeners
+function addEventListeners() {
+  document
+    .getElementById("chat-icon")
+    .addEventListener("click", toggleChatWindow);
+  document
+    .getElementById("chat-input")
+    .addEventListener("keypress", handleUserInput);
+  document
+    .getElementById("clear-chat")
+    .addEventListener("click", clearChatMessages);
+}
 
 // Toggle chat window display on icon click
-document.getElementById("chat-icon").addEventListener("click", function () {
+function toggleChatWindow() {
   const chatWindow = document.getElementById("chat-window");
   chatWindow.classList.toggle("show");
   if (chatWindow.classList.contains("show")) {
     loadMessages();
   }
-});
+}
 
 // Handle user input and display response
-document
-  .getElementById("chat-input")
-  .addEventListener("keypress", function (event) {
-    if (event.key === "Enter") {
-      const userMessage = event.target.value.trim();
-
-      if (userMessage !== "") {
-        displayMessage("user", userMessage);
-        event.target.value = "";
-        saveMessages();
-
-        // Make a request to your other server
-        const yourServerUrl = `https://localhost:5173/api/anaconda?q=${encodeURIComponent(
-          userMessage
-        )}`;
-
-        fetch(yourServerUrl)
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("Request failed");
-            }
-            return response.json();
-          })
-          .then((data) => {
-            // Handle the response from your server
-            // Assuming the response structure is similar to the Dxpapi response
-            const suggestionGroups = data.suggestionGroups;
-            if (suggestionGroups.length > 0) {
-              const searchSuggestions = suggestionGroups[0].searchSuggestions;
-              if (searchSuggestions.length > 0) {
-                const carouselHtml = `
-                <!-- Carousel HTML code -->
-              `;
-
-                displayMessage("bot", carouselHtml);
-                initCarousel();
-                saveMessages();
-              } else {
-                displayMessage("bot", "No product suggestions found.");
-              }
-            } else {
-              displayMessage("bot", "No suggestions found.");
-            }
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            // Fallback to the current solution of constructing the URL
-            const apiUrl = `https://suggest.dxpapi.com/api/v2/suggest/?account_id=7049&auth_key=22ka3bny3tnfgolo&q=${encodeURIComponent(
-              userMessage
-            )}&catalog_views=anacondastores%7Ccontent_en_anaconda_au`;
-
-            fetch(apiUrl)
-              .then((response) => response.json())
-              .then((data) => {
-                const suggestionGroups = data.suggestionGroups;
-                if (suggestionGroups.length > 0) {
-                  const searchSuggestions =
-                    suggestionGroups[0].searchSuggestions;
-                  if (searchSuggestions.length > 0) {
-                    const carouselHtml = `
-                <div class="product-carousel">
-                  <div class="carousel-container">
-                    ${searchSuggestions
-                      .slice(0, 5)
-                      .map(
-                        (suggestion) => `
-                      <div class="product-suggestion">
-                        <a href="${suggestion.styleUrl}" target="_blank">
-                          <img src="${suggestion.thumb_image}" alt="${suggestion.title}" />
-                        </a>
-                        <div class="product-details">
-                          <a href="${suggestion.styleUrl}" target="_blank">${suggestion.title}</a>
-                          <p>Price: $${suggestion.price}</p>
-                        </div>
-                      </div>
-                    `
-                      )
-                      .join("")}
-                  </div>
-                  <button class="prev-btn">&lt;</button>
-                  <button class="next-btn">&gt;</button>
-                </div>
-              `;
-
-                    displayMessage("bot", carouselHtml);
-                    initCarousel();
-                    saveMessages();
-                  } else {
-                    displayMessage("bot", "No product suggestions found.");
-                    saveMessages();
-                  }
-                } else {
-                  displayMessage("bot", "No suggestions found.");
-                  saveMessages();
-                }
-              })
-              .catch((error) => {
-                console.error("Error:", error);
-                displayMessage("bot", "Oops! Something went wrong.");
-              });
-          });
-      }
+function handleUserInput(event) {
+  if (event.key === "Enter") {
+    const userMessage = event.target.value.trim();
+    if (userMessage !== "") {
+      displayMessage("user", userMessage);
+      event.target.value = "";
+      saveMessages();
+      fetchSuggestions(userMessage);
     }
-  });
+  }
+}
 
-// Clear chat messages
-document.getElementById("clear-chat").addEventListener("click", function () {
-  const chatMessages = document.getElementById("chat-messages");
-  chatMessages.innerHTML = "";
-  chrome.storage.local.remove("messages");
-});
+// Fetch suggestions from the server
+function fetchSuggestions(userMessage) {
+  const yourServerUrl = `https://localhost:5173/api/anaconda?q=${encodeURIComponent(
+    userMessage
+  )}`;
+  fetch(yourServerUrl)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Request failed");
+      }
+      return response.json();
+    })
+    .then((data) => processSuggestions(data))
+    .catch((error) => handleFetchError(error, userMessage));
+}
+
+// Process the suggestions from the server response
+function processSuggestions(data) {
+  const suggestionGroups = data.suggestionGroups;
+  if (
+    suggestionGroups.length > 0 &&
+    suggestionGroups[0].searchSuggestions.length > 0
+  ) {
+    const carouselHtml = generateCarouselHTML(
+      suggestionGroups[0].searchSuggestions
+    );
+    displayMessage("bot", carouselHtml);
+    initAllCarousels();
+    saveMessages();
+  } else {
+    displayMessage("bot", "No product suggestions found.");
+  }
+}
+
+// Handle fetch error and fallback to current solution
+function handleFetchError(error, userMessage) {
+  console.error("Error:", error);
+  const apiUrl = `https://suggest.dxpapi.com/api/v2/suggest/?account_id=7049&auth_key=22ka3bny3tnfgolo&q=${encodeURIComponent(
+    userMessage
+  )}&catalog_views=anacondastores%7Ccontent_en_anaconda_au`;
+  fetch(apiUrl)
+    .then((response) => response.json())
+    .then((data) => processSuggestions(data))
+    .catch((error) => {
+      console.error("Error:", error);
+      displayMessage("bot", "Oops! Something went wrong.");
+    });
+}
+
+// Generate carousel HTML
+function generateCarouselHTML(searchSuggestions) {
+  return `
+    <div class="product-carousel">
+      <div class="carousel-container">
+        ${searchSuggestions
+          .slice(0, 5)
+          .map(
+            (suggestion) => `
+          <div class="product-suggestion">
+            <a href="${suggestion.styleUrl}" target="_blank">
+              <img src="${suggestion.thumb_image}" alt="${suggestion.title}" />
+            </a>
+            <div class="product-details">
+              <a href="${suggestion.styleUrl}" target="_blank">${suggestion.title}</a>
+              <p>Price: $${suggestion.price}</p>
+            </div>
+          </div>
+        `
+          )
+          .join("")}
+      </div>
+      <button class="prev-btn">&lt;</button>
+      <button class="next-btn">&gt;</button>
+    </div>
+  `;
+}
+
+// Initialize all carousels
+function initAllCarousels() {
+  const carousels = document.querySelectorAll(".product-carousel");
+  carousels.forEach((carousel) => {
+    const container = carousel.querySelector(".carousel-container");
+    const prevBtn = carousel.querySelector(".prev-btn");
+    const nextBtn = carousel.querySelector(".next-btn");
+    const suggestions = container.querySelectorAll(".product-suggestion");
+
+    let currentIndex = 0;
+
+    function showSuggestion(index) {
+      container.style.transform = `translateX(-${index * 100}%)`;
+    }
+
+    prevBtn.addEventListener("click", () => {
+      currentIndex =
+        (currentIndex - 1 + suggestions.length) % suggestions.length;
+      showSuggestion(currentIndex);
+    });
+
+    nextBtn.addEventListener("click", () => {
+      currentIndex = (currentIndex + 1) % suggestions.length;
+      showSuggestion(currentIndex);
+    });
+  });
+}
 
 // Display a message in the chat window
 function displayMessage(sender, message) {
@@ -161,31 +184,16 @@ function displayMessage(sender, message) {
   messageElement.appendChild(messageContent);
   chatMessages.appendChild(messageElement);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  // Reinitialize carousels after adding new messages
+  initAllCarousels();
 }
 
-// Initialize the carousel
-function initCarousel() {
-  const carousel = document.querySelector(".product-carousel");
-  const container = carousel.querySelector(".carousel-container");
-  const prevBtn = carousel.querySelector(".prev-btn");
-  const nextBtn = carousel.querySelector(".next-btn");
-  const suggestions = container.querySelectorAll(".product-suggestion");
-
-  let currentIndex = 0;
-
-  function showSuggestion(index) {
-    container.style.transform = `translateX(-${index * 100}%)`;
-  }
-
-  prevBtn.addEventListener("click", () => {
-    currentIndex = (currentIndex - 1 + suggestions.length) % suggestions.length;
-    showSuggestion(currentIndex);
-  });
-
-  nextBtn.addEventListener("click", () => {
-    currentIndex = (currentIndex + 1) % suggestions.length;
-    showSuggestion(currentIndex);
-  });
+// Clear chat messages
+function clearChatMessages() {
+  const chatMessages = document.getElementById("chat-messages");
+  chatMessages.innerHTML = "";
+  chrome.storage.local.remove("messages");
 }
 
 // Save messages to local storage
@@ -213,3 +221,6 @@ function loadMessages() {
     }
   });
 }
+
+// Initialize the extension
+init();
