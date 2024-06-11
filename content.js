@@ -17,6 +17,9 @@ document.body.insertAdjacentHTML("beforeend", chatIconHTML);
 document.getElementById("chat-icon").addEventListener("click", function () {
   const chatWindow = document.getElementById("chat-window");
   chatWindow.classList.toggle("show");
+  if (chatWindow.classList.contains("show")) {
+    loadMessages();
+  }
 });
 
 // Handle user input and display response
@@ -30,6 +33,7 @@ document
         displayMessage("user", userMessage);
         displayMessage("bot", `I heard you say: "${userMessage}"`);
         event.target.value = "";
+        saveMessages();
       }
     }
   });
@@ -42,4 +46,27 @@ function displayMessage(sender, message) {
   messageElement.textContent = message;
   chatMessages.appendChild(messageElement);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Save messages to local storage
+function saveMessages() {
+  const chatMessages = document.getElementById("chat-messages");
+  const messages = Array.from(chatMessages.children).map((messageElement) => ({
+    sender: messageElement.classList.contains("user") ? "user" : "bot",
+    message: messageElement.textContent,
+  }));
+  chrome.storage.local.set({ messages });
+}
+
+// Load messages from local storage
+function loadMessages() {
+  chrome.storage.local.get("messages", function (data) {
+    const chatMessages = document.getElementById("chat-messages");
+    chatMessages.innerHTML = "";
+    if (data.messages) {
+      data.messages.forEach(({ sender, message }) => {
+        displayMessage(sender, message);
+      });
+    }
+  });
 }
