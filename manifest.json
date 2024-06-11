@@ -30,7 +30,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*.png"],
+      "resources": ["icons/*.png", "icon48.png"],
       "matches": ["https://www.anacondastores.com/*"]
     }
   ]
