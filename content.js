@@ -5,7 +5,10 @@ const iconUrl = chrome.runtime.getURL("icons/icon48.png");
 const chatIconHTML = `
 <div id="chat-icon" class="chat-icon" style="background-image: url('${iconUrl}')"></div>
 <div id="chat-window" class="chat-window">
-  <div id="chat-header" class="chat-header">Conversational Search</div>
+  <div id="chat-header" class="chat-header">
+    <span>Conversational Search</span>
+    <button id="clear-chat" class="clear-chat">Clear</button>
+  </div>
   <div id="chat-messages" class="chat-messages"></div>
   <input type="text" id="chat-input" class="chat-input" placeholder="Type your query...">
 </div>
@@ -37,6 +40,13 @@ document
       }
     }
   });
+
+// Clear chat messages
+document.getElementById("clear-chat").addEventListener("click", function () {
+  const chatMessages = document.getElementById("chat-messages");
+  chatMessages.innerHTML = "";
+  chrome.storage.local.remove("messages");
+});
 
 // Display a message in the chat window
 function displayMessage(sender, message) {
