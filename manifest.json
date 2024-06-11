@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Anaconda Conversational Search",
   "version": "1.0",
-  "description": "Intercepts searches on anacondastores.com and provides responses via a conversational interface.",
+  "description": "Conversational search interface for anacondastores.com.",
   "permissions": ["activeTab", "webNavigation", "storage"],
   "host_permissions": ["https://www.anacondastores.com/*"],
   "background": {
@@ -27,5 +27,11 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*.png"],
+      "matches": ["https://www.anacondastores.com/*"]
+    }
+  ]
 }
