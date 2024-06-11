@@ -62,6 +62,7 @@ document
 
                 displayMessage("bot", carouselHtml);
                 initCarousel();
+                saveMessages();
               } else {
                 displayMessage("bot", "No product suggestions found.");
               }
@@ -111,11 +112,14 @@ document
 
                     displayMessage("bot", carouselHtml);
                     initCarousel();
+                    saveMessages();
                   } else {
                     displayMessage("bot", "No product suggestions found.");
+                    saveMessages();
                   }
                 } else {
                   displayMessage("bot", "No suggestions found.");
+                  saveMessages();
                 }
               })
               .catch((error) => {
@@ -140,15 +144,21 @@ function displayMessage(sender, message) {
   const messageElement = document.createElement("div");
   messageElement.classList.add("chat-message", sender);
 
-  if (
-    sender === "bot" &&
-    message.includes('<div class="product-suggestion">')
-  ) {
-    messageElement.innerHTML = message;
+  const senderLabel = document.createElement("span");
+  senderLabel.classList.add("sender-label");
+  senderLabel.textContent = sender === "user" ? "User:" : "Denbot 9000:";
+  messageElement.appendChild(senderLabel);
+
+  const messageContent = document.createElement("div");
+  messageContent.classList.add("message-content");
+
+  if (sender === "bot" && message.includes('<div class="product-carousel">')) {
+    messageContent.innerHTML = message;
   } else {
-    messageElement.textContent = message;
+    messageContent.textContent = message;
   }
 
+  messageElement.appendChild(messageContent);
   chatMessages.appendChild(messageElement);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -183,7 +193,10 @@ function saveMessages() {
   const chatMessages = document.getElementById("chat-messages");
   const messages = Array.from(chatMessages.children).map((messageElement) => ({
     sender: messageElement.classList.contains("user") ? "user" : "bot",
-    message: messageElement.textContent,
+    message: messageElement
+      .querySelector(".message-content")
+      .innerHTML.replace(/^(User:|Denbot 9000:)/, "")
+      .trim(),
   }));
   chrome.storage.local.set({ messages });
 }

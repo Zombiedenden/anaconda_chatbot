@@ -63,6 +63,19 @@
   overflow-y: auto;
 }
 
+.chat-message {
+  margin-bottom: 10px;
+}
+
+.sender-label {
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.message-content {
+  display: inline;
+}
+
 .chat-input {
   width: 100%;
   border: none;
