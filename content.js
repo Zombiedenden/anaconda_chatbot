@@ -34,9 +34,51 @@ document
 
       if (userMessage !== "") {
         displayMessage("user", userMessage);
-        displayMessage("bot", `I heard you say: "${userMessage}"`);
         event.target.value = "";
         saveMessages();
+
+        // Send request to Dxpapi URL
+        const apiUrl = `https://suggest.dxpapi.com/api/v2/suggest/?account_id=7049&auth_key=22ka3bny3tnfgolo&q=${encodeURIComponent(
+          userMessage
+        )}&catalog_views=anacondastores%7Ccontent_en_anaconda_au`;
+
+        fetch(apiUrl)
+          .then((response) => response.json())
+          .then((data) => {
+            const suggestionGroups = data.suggestionGroups;
+            if (suggestionGroups.length > 0) {
+              const searchSuggestions = suggestionGroups[0].searchSuggestions;
+              if (searchSuggestions.length > 0) {
+                const firstSuggestion = searchSuggestions[0];
+                const productTitle = firstSuggestion.title;
+                const productImageUrl = firstSuggestion.thumb_image;
+                const productUrl = firstSuggestion.styleUrl;
+                const productPrice = firstSuggestion.price;
+
+                const productHtml = `
+                <div class="product-suggestion">
+                  <a href="${productUrl}" target="_blank">
+                    <img src="${productImageUrl}" alt="${productTitle}" />
+                  </a>
+                  <div class="product-details">
+                    <a href="${productUrl}" target="_blank">${productTitle}</a>
+                    <p>Price: $${productPrice}</p>
+                  </div>
+                </div>
+              `;
+
+                displayMessage("bot", productHtml);
+              } else {
+                displayMessage("bot", "No product suggestions found.");
+              }
+            } else {
+              displayMessage("bot", "No suggestions found.");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            displayMessage("bot", "Oops! Something went wrong.");
+          });
       }
     }
   });
@@ -53,7 +95,16 @@ function displayMessage(sender, message) {
   const chatMessages = document.getElementById("chat-messages");
   const messageElement = document.createElement("div");
   messageElement.classList.add("chat-message", sender);
-  messageElement.textContent = message;
+
+  if (
+    sender === "bot" &&
+    message.includes('<div class="product-suggestion">')
+  ) {
+    messageElement.innerHTML = message;
+  } else {
+    messageElement.textContent = message;
+  }
+
   chatMessages.appendChild(messageElement);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
