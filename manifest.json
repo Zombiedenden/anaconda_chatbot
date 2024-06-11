@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Anaconda Conversational Search",
+  "version": "1.0",
+  "description": "Intercepts searches on anacondastores.com and provides responses via a conversational interface.",
+  "permissions": ["activeTab", "webNavigation", "storage"],
+  "host_permissions": ["https://www.anacondastores.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.anacondastores.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  }
+}
