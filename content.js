@@ -49,25 +49,28 @@ document
             if (suggestionGroups.length > 0) {
               const searchSuggestions = suggestionGroups[0].searchSuggestions;
               if (searchSuggestions.length > 0) {
-                const firstSuggestion = searchSuggestions[0];
-                const productTitle = firstSuggestion.title;
-                const productImageUrl = firstSuggestion.thumb_image;
-                const productUrl = firstSuggestion.styleUrl;
-                const productPrice = firstSuggestion.price;
-
-                const productHtml = `
-                <div class="product-suggestion">
-                  <a href="${productUrl}" target="_blank">
-                    <img src="${productImageUrl}" alt="${productTitle}" />
-                  </a>
-                  <div class="product-details">
-                    <a href="${productUrl}" target="_blank">${productTitle}</a>
-                    <p>Price: $${productPrice}</p>
-                  </div>
+                const carouselHtml = `
+                <div class="product-carousel">
+                  ${searchSuggestions
+                    .slice(0, 5)
+                    .map(
+                      (suggestion) => `
+                    <div class="product-suggestion">
+                      <a href="${suggestion.styleUrl}" target="_blank">
+                        <img src="${suggestion.thumb_image}" alt="${suggestion.title}" />
+                      </a>
+                      <div class="product-details">
+                        <a href="${suggestion.styleUrl}" target="_blank">${suggestion.title}</a>
+                        <p>Price: $${suggestion.price}</p>
+                      </div>
+                    </div>
+                  `
+                    )
+                    .join("")}
                 </div>
               `;
 
-                displayMessage("bot", productHtml);
+                displayMessage("bot", carouselHtml);
               } else {
                 displayMessage("bot", "No product suggestions found.");
               }

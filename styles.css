@@ -73,21 +73,30 @@
   border-bottom-right-radius: 10px;
 }
 
-.product-suggestion {
+.product-carousel {
   display: flex;
-  align-items: center;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
   margin-bottom: 10px;
 }
 
-.product-suggestion img {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
+.product-suggestion {
+  flex: 0 0 auto;
+  width: 200px;
   margin-right: 10px;
+  scroll-snap-align: start;
+}
+
+.product-suggestion img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  margin-bottom: 10px;
 }
 
 .product-details {
-  flex: 1;
+  text-align: center;
 }
 
 .product-details a {
