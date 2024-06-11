@@ -37,40 +37,31 @@ document
         event.target.value = "";
         saveMessages();
 
-        // Send request to Dxpapi URL
-        const apiUrl = `https://suggest.dxpapi.com/api/v2/suggest/?account_id=7049&auth_key=22ka3bny3tnfgolo&q=${encodeURIComponent(
+        // Make a request to your other server
+        const yourServerUrl = `https://localhost:5173/api/anaconda?q=${encodeURIComponent(
           userMessage
-        )}&catalog_views=anacondastores%7Ccontent_en_anaconda_au`;
+        )}`;
 
-        fetch(apiUrl)
-          .then((response) => response.json())
+        fetch(yourServerUrl)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Request failed");
+            }
+            return response.json();
+          })
           .then((data) => {
+            // Handle the response from your server
+            // Assuming the response structure is similar to the Dxpapi response
             const suggestionGroups = data.suggestionGroups;
             if (suggestionGroups.length > 0) {
               const searchSuggestions = suggestionGroups[0].searchSuggestions;
               if (searchSuggestions.length > 0) {
                 const carouselHtml = `
-                <div class="product-carousel">
-                  ${searchSuggestions
-                    .slice(0, 5)
-                    .map(
-                      (suggestion) => `
-                    <div class="product-suggestion">
-                      <a href="${suggestion.styleUrl}" target="_blank">
-                        <img src="${suggestion.thumb_image}" alt="${suggestion.title}" />
-                      </a>
-                      <div class="product-details">
-                        <a href="${suggestion.styleUrl}" target="_blank">${suggestion.title}</a>
-                        <p>Price: $${suggestion.price}</p>
-                      </div>
-                    </div>
-                  `
-                    )
-                    .join("")}
-                </div>
+                <!-- Carousel HTML code -->
               `;
 
                 displayMessage("bot", carouselHtml);
+                initCarousel();
               } else {
                 displayMessage("bot", "No product suggestions found.");
               }
@@ -80,7 +71,57 @@ document
           })
           .catch((error) => {
             console.error("Error:", error);
-            displayMessage("bot", "Oops! Something went wrong.");
+            // Fallback to the current solution of constructing the URL
+            const apiUrl = `https://suggest.dxpapi.com/api/v2/suggest/?account_id=7049&auth_key=22ka3bny3tnfgolo&q=${encodeURIComponent(
+              userMessage
+            )}&catalog_views=anacondastores%7Ccontent_en_anaconda_au`;
+
+            fetch(apiUrl)
+              .then((response) => response.json())
+              .then((data) => {
+                const suggestionGroups = data.suggestionGroups;
+                if (suggestionGroups.length > 0) {
+                  const searchSuggestions =
+                    suggestionGroups[0].searchSuggestions;
+                  if (searchSuggestions.length > 0) {
+                    const carouselHtml = `
+                <div class="product-carousel">
+                  <div class="carousel-container">
+                    ${searchSuggestions
+                      .slice(0, 5)
+                      .map(
+                        (suggestion) => `
+                      <div class="product-suggestion">
+                        <a href="${suggestion.styleUrl}" target="_blank">
+                          <img src="${suggestion.thumb_image}" alt="${suggestion.title}" />
+                        </a>
+                        <div class="product-details">
+                          <a href="${suggestion.styleUrl}" target="_blank">${suggestion.title}</a>
+                          <p>Price: $${suggestion.price}</p>
+                        </div>
+                      </div>
+                    `
+                      )
+                      .join("")}
+                  </div>
+                  <button class="prev-btn">&lt;</button>
+                  <button class="next-btn">&gt;</button>
+                </div>
+              `;
+
+                    displayMessage("bot", carouselHtml);
+                    initCarousel();
+                  } else {
+                    displayMessage("bot", "No product suggestions found.");
+                  }
+                } else {
+                  displayMessage("bot", "No suggestions found.");
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                displayMessage("bot", "Oops! Something went wrong.");
+              });
           });
       }
     }
@@ -110,6 +151,31 @@ function displayMessage(sender, message) {
 
   chatMessages.appendChild(messageElement);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Initialize the carousel
+function initCarousel() {
+  const carousel = document.querySelector(".product-carousel");
+  const container = carousel.querySelector(".carousel-container");
+  const prevBtn = carousel.querySelector(".prev-btn");
+  const nextBtn = carousel.querySelector(".next-btn");
+  const suggestions = container.querySelectorAll(".product-suggestion");
+
+  let currentIndex = 0;
+
+  function showSuggestion(index) {
+    container.style.transform = `translateX(-${index * 100}%)`;
+  }
+
+  prevBtn.addEventListener("click", () => {
+    currentIndex = (currentIndex - 1 + suggestions.length) % suggestions.length;
+    showSuggestion(currentIndex);
+  });
+
+  nextBtn.addEventListener("click", () => {
+    currentIndex = (currentIndex + 1) % suggestions.length;
+    showSuggestion(currentIndex);
+  });
 }
 
 // Save messages to local storage
