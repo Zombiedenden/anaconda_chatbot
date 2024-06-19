@@ -17,7 +17,7 @@
   bottom: 80px;
   right: 20px;
   width: 300px;
-  height: 400px;
+  height: 500px;
   background: white;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -142,4 +142,38 @@
 
 .next-btn {
   right: 10px;
+}
+
+.loading {
+  display: none;
+  text-align: center;
+  padding: 20px;
+}
+
+.loading-bar {
+  width: 100%;
+  background-color: #f3f3f3;
+  border-radius: 5px;
+  overflow: hidden;
+  height: 10px;
+  margin-top: 10px;
+}
+
+.loading-bar-progress {
+  width: 0;
+  height: 100%;
+  background-color: #4caf50;
+  animation: loadingBarAnimation 2s infinite;
+}
+
+@keyframes loadingBarAnimation {
+  0% {
+    width: 0;
+  }
+  50% {
+    width: 100%;
+  }
+  100% {
+    width: 0;
+  }
 }

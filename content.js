@@ -13,6 +13,12 @@ function injectHTML(iconUrl) {
         <button id="clear-chat" class="clear-chat">Clear</button>
       </div>
       <div id="chat-messages" class="chat-messages"></div>
+      <div id="loading" class="loading">
+        <p id="loading-text"></p>
+        <div class="loading-bar">
+          <div class="loading-bar-progress"></div>
+        </div>
+      </div>
       <input type="text" id="chat-input" class="chat-input" placeholder="Type your query...">
     </div>
   `;
@@ -46,6 +52,7 @@ function handleUserInput(event) {
       displayMessage("user", userMessage);
       event.target.value = "";
       saveMessages();
+      showLoadingAnimation("Searching for products...");
       fetchSuggestions(userMessage);
     }
   }
@@ -65,9 +72,13 @@ function fetchSuggestions(userMessage) {
     })
     .then((data) => {
       console.log("🚀 ~ .then ~ response.json():", data);
+      hideLoadingAnimation();
       processSuggestions(data);
     })
-    .catch((error) => handleFetchError(error, userMessage));
+    .catch((error) => {
+      hideLoadingAnimation();
+      handleFetchError(error, userMessage);
+    });
 }
 
 function processSuggestions(data) {
@@ -88,8 +99,12 @@ function handleFetchError(error, userMessage) {
   )}&catalog_views=anacondastores%7Ccontent_en_anaconda_au`;
   fetch(apiUrl)
     .then((response) => response.json())
-    .then((data) => processSuggestions(data))
+    .then((data) => {
+      hideLoadingAnimation();
+      processSuggestions(data);
+    })
     .catch((error) => {
+      hideLoadingAnimation();
       console.error("Error:", error);
       displayMessage("bot", "Oops! Something went wrong.");
     });
@@ -173,6 +188,18 @@ function displayMessage(sender, message) {
 
   // Reinitialize carousels after adding new messages
   initAllCarousels();
+}
+
+function showLoadingAnimation(message) {
+  const loading = document.getElementById("loading");
+  const loadingText = document.getElementById("loading-text");
+  loadingText.textContent = message;
+  loading.style.display = "block";
+}
+
+function hideLoadingAnimation() {
+  const loading = document.getElementById("loading");
+  loading.style.display = "none";
 }
 
 function clearChatMessages() {
