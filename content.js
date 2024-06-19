@@ -55,6 +55,7 @@ function fetchSuggestions(userMessage) {
   const yourServerUrl = `http://localhost:5173/api/anaconda/enhance-quick?q=${encodeURIComponent(
     userMessage
   )}`;
+
   fetch(yourServerUrl)
     .then((response) => {
       if (!response.ok) {
@@ -62,7 +63,10 @@ function fetchSuggestions(userMessage) {
       }
       return response.json();
     })
-    .then((data) => processSuggestions(data))
+    .then((data) => {
+      console.log("🚀 ~ .then ~ response.json():", data);
+      processSuggestions(data);
+    })
     .catch((error) => handleFetchError(error, userMessage));
 }
 
