@@ -1,11 +1,9 @@
-// Main Initialization Function
 function init() {
   const iconUrl = chrome.runtime.getURL("icons/icon48.png");
   injectHTML(iconUrl);
   addEventListeners();
 }
 
-// Inject the icon and chat window HTML into the page
 function injectHTML(iconUrl) {
   const chatIconHTML = `
     <div id="chat-icon" class="chat-icon" style="background-image: url('${iconUrl}')"></div>
@@ -21,7 +19,6 @@ function injectHTML(iconUrl) {
   document.body.insertAdjacentHTML("beforeend", chatIconHTML);
 }
 
-// Add all event listeners
 function addEventListeners() {
   document
     .getElementById("chat-icon")
@@ -34,7 +31,6 @@ function addEventListeners() {
     .addEventListener("click", clearChatMessages);
 }
 
-// Toggle chat window display on icon click
 function toggleChatWindow() {
   const chatWindow = document.getElementById("chat-window");
   chatWindow.classList.toggle("show");
@@ -43,7 +39,6 @@ function toggleChatWindow() {
   }
 }
 
-// Handle user input and display response
 function handleUserInput(event) {
   if (event.key === "Enter") {
     const userMessage = event.target.value.trim();
@@ -56,9 +51,8 @@ function handleUserInput(event) {
   }
 }
 
-// Fetch suggestions from the server
 function fetchSuggestions(userMessage) {
-  const yourServerUrl = `https://localhost:5173/api/anaconda/enhance?q=${encodeURIComponent(
+  const yourServerUrl = `http://localhost:5173/api/anaconda/enhance?q=${encodeURIComponent(
     userMessage
   )}`;
   fetch(yourServerUrl)
@@ -72,16 +66,9 @@ function fetchSuggestions(userMessage) {
     .catch((error) => handleFetchError(error, userMessage));
 }
 
-// Process the suggestions from the server response
 function processSuggestions(data) {
-  const suggestionGroups = data.suggestionGroups;
-  if (
-    suggestionGroups.length > 0 &&
-    suggestionGroups[0].searchSuggestions.length > 0
-  ) {
-    const carouselHtml = generateCarouselHTML(
-      suggestionGroups[0].searchSuggestions
-    );
+  if (data && data.results && data.results.length > 0) {
+    const carouselHtml = generateCarouselHTML(data.results);
     displayMessage("bot", carouselHtml);
     initAllCarousels();
     saveMessages();
@@ -90,7 +77,6 @@ function processSuggestions(data) {
   }
 }
 
-// Handle fetch error and fallback to current solution
 function handleFetchError(error, userMessage) {
   console.error("Error:", error);
   const apiUrl = `https://suggest.dxpapi.com/api/v2/suggest/?account_id=7049&auth_key=22ka3bny3tnfgolo&q=${encodeURIComponent(
@@ -105,22 +91,20 @@ function handleFetchError(error, userMessage) {
     });
 }
 
-// Generate carousel HTML
-function generateCarouselHTML(searchSuggestions) {
+function generateCarouselHTML(results) {
   return `
     <div class="product-carousel">
       <div class="carousel-container">
-        ${searchSuggestions
-          .slice(0, 5)
+        ${results
           .map(
-            (suggestion) => `
+            (result) => `
           <div class="product-suggestion">
-            <a href="${suggestion.styleUrl}" target="_blank">
-              <img src="${suggestion.thumb_image}" alt="${suggestion.title}" />
+            <a href="${result.url}" target="_blank">
+              <img src="${result.image}" alt="${result.title}" />
             </a>
             <div class="product-details">
-              <a href="${suggestion.styleUrl}" target="_blank">${suggestion.title}</a>
-              <p>Price: $${suggestion.price}</p>
+              <a href="${result.url}" target="_blank">${result.title}</a>
+              <p>Price: ${result.price}</p>
             </div>
           </div>
         `
@@ -133,7 +117,6 @@ function generateCarouselHTML(searchSuggestions) {
   `;
 }
 
-// Initialize all carousels
 function initAllCarousels() {
   const carousels = document.querySelectorAll(".product-carousel");
   carousels.forEach((carousel) => {
@@ -161,7 +144,6 @@ function initAllCarousels() {
   });
 }
 
-// Display a message in the chat window
 function displayMessage(sender, message) {
   const chatMessages = document.getElementById("chat-messages");
   const messageElement = document.createElement("div");
@@ -189,14 +171,12 @@ function displayMessage(sender, message) {
   initAllCarousels();
 }
 
-// Clear chat messages
 function clearChatMessages() {
   const chatMessages = document.getElementById("chat-messages");
   chatMessages.innerHTML = "";
   chrome.storage.local.remove("messages");
 }
 
-// Save messages to local storage
 function saveMessages() {
   const chatMessages = document.getElementById("chat-messages");
   const messages = Array.from(chatMessages.children).map((messageElement) => ({
@@ -209,7 +189,6 @@ function saveMessages() {
   chrome.storage.local.set({ messages });
 }
 
-// Load messages from local storage
 function loadMessages() {
   chrome.storage.local.get("messages", function (data) {
     const chatMessages = document.getElementById("chat-messages");
@@ -222,5 +201,4 @@ function loadMessages() {
   });
 }
 
-// Initialize the extension
 init();
