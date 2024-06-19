@@ -52,7 +52,7 @@ function handleUserInput(event) {
 }
 
 function fetchSuggestions(userMessage) {
-  const yourServerUrl = `http://localhost:5173/api/anaconda/enhance?q=${encodeURIComponent(
+  const yourServerUrl = `http://localhost:5173/api/anaconda/enhance-quick?q=${encodeURIComponent(
     userMessage
   )}`;
   fetch(yourServerUrl)
